@@ -1,4 +1,4 @@
-name: Deploy to OCI
+name: CI/CD pipeline
 
 on:
   push:
@@ -26,9 +26,10 @@ jobs:
             echo "==> Installing dependencies"
             pnpm install --frozen-lockfile
 
-            echo "==> Running DB migrations"
+            echo "==> Running DB migrations + generating Prisma client"
             cd apps/backend
             npx prisma migrate deploy --schema src/database/prisma/schema.prisma
+            npx prisma generate --schema src/database/prisma/schema.prisma
             cd ~/SquadSplit
 
             echo "==> Building backend"

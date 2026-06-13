@@ -4,10 +4,10 @@ import type { SPLIT_TYPES } from '../../config/constants';
 type SplitType = typeof SPLIT_TYPES[number];
 
 interface SplitEntry {
-  userId:     string;
-  amount?:    number;
-  percentage?: number;
-  shares?:    number;
+  userId:      string;
+  amount?:     number | undefined;
+  percentage?: number | undefined;
+  shares?:     number | undefined;
 }
 
 interface ComputedSplit {
