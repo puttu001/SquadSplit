@@ -19,7 +19,7 @@ import notifRoutes       from './modules/notifications/notifications.routes';
 import activityRoutes    from './modules/activity/activity.routes';
 import analyticsRoutes   from './modules/analytics/analytics.routes';
 
-const app = express();
+const app: express.Application = express();
 
 // ─── Security & Parsing ───────────────────────────────────────────────────────
 app.use(helmet());
