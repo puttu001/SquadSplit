@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { AppError } from '../../shared/middleware/error.middleware';
 import { computeGroupBalances, simplifyDebts } from '../../shared/utils/debt';

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { notificationsService } from './notifications.service';
-import { sendSuccess, sendPaginated } from '../../shared/utils/response';
+import { sendSuccess } from '../../shared/utils/response';
 
 export class NotificationsController {
   async list(req: Request, res: Response, next: NextFunction) {
