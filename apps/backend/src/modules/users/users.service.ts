@@ -125,7 +125,7 @@ export class UsersService {
         friend: { select: { id: true, username: true, name: true, avatarUrl: true } },
       },
     });
-    return friendships.map((f) => f.friend);
+    return friendships.map((f: { friend: { id: string; name: string; username: string | null; avatarUrl: string | null } }) => f.friend);
   }
 
   async removeFriend(userId: string, friendId: string) {

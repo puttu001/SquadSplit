@@ -57,7 +57,7 @@ function computePercentage(total: number, splits: SplitEntry[]): ComputedSplit[]
   const computed = splits.map((s) => ({
     userId:     s.userId,
     amount:     parseFloat(((s.percentage! / 100) * total).toFixed(2)),
-    percentage: s.percentage,
+    percentage: s.percentage!,
   }));
 
   const diff = parseFloat((total - computed.reduce((a, c) => a + c.amount, 0)).toFixed(2));
@@ -73,7 +73,7 @@ function computeShares(total: number, splits: SplitEntry[]): ComputedSplit[] {
   const computed = splits.map((s) => ({
     userId: s.userId,
     amount: parseFloat(((s.shares! / totalShares) * total).toFixed(2)),
-    shares: s.shares,
+    shares: s.shares!,
   }));
 
   const diff = parseFloat((total - computed.reduce((a, c) => a + c.amount, 0)).toFixed(2));
