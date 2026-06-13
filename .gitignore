@@ -1,1 +1,53 @@
-venv/
+# ─── Dependencies ─────────────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+
+# ─── Build output ─────────────────────────────────────────────────────────────
+dist/
+build/
+*.tsbuildinfo
+
+# ─── Environment files ────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# ─── Runtime / temp ───────────────────────────────────────────────────────────
+*.local
+.cache/
+.tmp/
+tmp/
+
+# ─── Personal / dev notes (not for repo) ──────────────────────────────────────
+next-step.txt
+run.txt
+
+# ─── Test coverage ────────────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ─── OS files ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ─── Editor files ─────────────────────────────────────────────────────────────
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ─── Prisma ───────────────────────────────────────────────────────────────────
+# Generated migration lock — keep migration SQL but ignore generated engines
+apps/backend/src/database/prisma/migrations/migration_lock.toml
+
+# ─── Vite ─────────────────────────────────────────────────────────────────────
+*.local

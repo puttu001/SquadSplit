@@ -1,0 +1,319 @@
+// SquadSplit — Prisma Schema
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users & Auth ─────────────────────────────────────────────────────────────
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  username        String   @unique
+  passwordHash    String
+  name            String
+  avatarUrl       String?
+  phoneNumber     String?
+  upiId           String?  // UPI ID for payment links
+  isEmailVerified Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Auth
+  refreshTokens               RefreshToken[]
+  passwordResetTokens         PasswordResetToken[]
+  emailVerificationTokens     EmailVerificationToken[]
+
+  // Social
+  sentFriendRequests     FriendRequest[] @relation("FriendRequestSender")
+  receivedFriendRequests FriendRequest[] @relation("FriendRequestReceiver")
+  friendships            Friendship[]    @relation("FriendshipUser")
+  friendOf               Friendship[]    @relation("FriendshipFriend")
+
+  // Groups & Expenses
+  groupMemberships    GroupMember[]
+  paidExpenses        Expense[]        @relation("ExpensePaidBy")
+  expenseSplits       ExpenseSplit[]
+  paidSettlements     Settlement[]     @relation("SettlementPayer")
+  receivedSettlements Settlement[]     @relation("SettlementPayee")
+
+  // Notifications & Activity
+  notifications Notification[]
+  activities    Activity[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verification_tokens")
+}
+
+// ─── Friends ──────────────────────────────────────────────────────────────────
+
+model FriendRequest {
+  id         String              @id @default(cuid())
+  senderId   String
+  receiverId String
+  status     FriendRequestStatus @default(PENDING)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  sender   User @relation("FriendRequestSender", fields: [senderId], references: [id])
+  receiver User @relation("FriendRequestReceiver", fields: [receiverId], references: [id])
+
+  @@unique([senderId, receiverId])
+  @@map("friend_requests")
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Friendship {
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+
+  user   User @relation("FriendshipUser", fields: [userId], references: [id])
+  friend User @relation("FriendshipFriend", fields: [friendId], references: [id])
+
+  @@unique([userId, friendId])
+  @@map("friendships")
+}
+
+// ─── Groups ───────────────────────────────────────────────────────────────────
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  imageUrl    String?
+  inviteCode  String   @unique @default(cuid())
+  isArchived  Boolean  @default(false)
+  isSettled   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     GroupMember[]
+  expenses    Expense[]
+  settlements Settlement[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id       String          @id @default(cuid())
+  groupId  String
+  userId   String
+  role     GroupMemberRole @default(MEMBER)
+  joinedAt DateTime        @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+enum GroupMemberRole {
+  ADMIN
+  MEMBER
+}
+
+// ─── Expenses ─────────────────────────────────────────────────────────────────
+
+model Expense {
+  id          String          @id @default(cuid())
+  groupId     String
+  paidById    String
+  amount      Decimal         @db.Decimal(12, 2)
+  description String
+  notes       String?
+  category    ExpenseCategory @default(MISCELLANEOUS)
+  customTag   String?
+  date        DateTime
+  isRecurring Boolean         @default(false)
+  isDeleted   Boolean         @default(false)  // soft delete for audit trail
+  deletedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  group  Group          @relation(fields: [groupId], references: [id])
+  paidBy User           @relation("ExpensePaidBy", fields: [paidById], references: [id])
+  splits ExpenseSplit[]
+
+  @@map("expenses")
+}
+
+enum ExpenseCategory {
+  FOOD
+  GROCERY
+  TRAVEL
+  PETROL_FUEL
+  RENT
+  UTILITIES
+  ELECTRICITY
+  INTERNET
+  SHOPPING
+  ENTERTAINMENT
+  MEDICAL
+  EDUCATION
+  PARTY
+  GIFTS
+  SUBSCRIPTION
+  MISCELLANEOUS
+}
+
+model ExpenseSplit {
+  id         String    @id @default(cuid())
+  expenseId  String
+  userId     String
+  amount     Decimal   @db.Decimal(12, 2)
+  splitType  SplitType
+  percentage Decimal?  @db.Decimal(5, 2)  // for PERCENTAGE split
+  shares     Int?                          // for SHARES split
+  isPaid     Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+
+  expense Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([expenseId, userId])
+  @@map("expense_splits")
+}
+
+enum SplitType {
+  EQUAL
+  EXACT
+  PERCENTAGE
+  SHARES
+}
+
+// ─── Settlements ──────────────────────────────────────────────────────────────
+
+model Settlement {
+  id         String           @id @default(cuid())
+  groupId    String
+  payerId    String
+  payeeId    String
+  amount     Decimal          @db.Decimal(12, 2)
+  notes      String?
+  receiptUrl String?
+  upiRefId   String?          // UPI transaction reference
+  status     SettlementStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  group Group @relation(fields: [groupId], references: [id])
+  payer User  @relation("SettlementPayer", fields: [payerId], references: [id])
+  payee User  @relation("SettlementPayee", fields: [payeeId], references: [id])
+
+  @@map("settlements")
+}
+
+enum SettlementStatus {
+  PENDING
+  COMPLETED
+  PARTIAL
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?            // extra payload (expenseId, groupId, etc.)
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  EXPENSE_ADDED
+  EXPENSE_EDITED
+  EXPENSE_DELETED
+  SETTLEMENT_REMINDER
+  PAYMENT_RECEIVED
+  FRIEND_REQUEST_RECEIVED
+  FRIEND_REQUEST_ACCEPTED
+  GROUP_INVITE
+  MEMBER_JOINED
+  MEMBER_REMOVED
+}
+
+// ─── Activity Feed ────────────────────────────────────────────────────────────
+
+model Activity {
+  id        String       @id @default(cuid())
+  userId    String
+  groupId   String?
+  type      ActivityType
+  data      Json         // structured event data for rendering the feed
+  createdAt DateTime     @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("activities")
+}
+
+enum ActivityType {
+  EXPENSE_CREATED
+  EXPENSE_UPDATED
+  EXPENSE_DELETED
+  SETTLEMENT_CREATED
+  SETTLEMENT_COMPLETED
+  MEMBER_ADDED
+  MEMBER_REMOVED
+  GROUP_CREATED
+  GROUP_UPDATED
+  FRIEND_ADDED
+}

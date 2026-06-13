@@ -1,0 +1,46 @@
+name: Deploy to OCI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_USER }}
+          key: ${{ secrets.OCI_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "==> Pulling latest code"
+            cd ~/squadsplit
+            git pull origin main
+
+            echo "==> Installing dependencies"
+            pnpm install --frozen-lockfile
+
+            echo "==> Running DB migrations"
+            cd apps/backend
+            npx prisma migrate deploy --schema src/database/prisma/schema.prisma
+            cd ~/squadsplit
+
+            echo "==> Building backend"
+            cd apps/backend && pnpm build && cd ~/squadsplit
+
+            echo "==> Building frontend"
+            cd apps/frontend && pnpm build && cd ~/squadsplit
+
+            echo "==> Publishing frontend to nginx root"
+            sudo rsync -a --delete apps/frontend/dist/ /var/www/squadsplit/
+
+            echo "==> Restarting backend"
+            pm2 reload squadsplit-backend || pm2 start ecosystem.config.cjs --env production
+
+            echo "==> Done"
