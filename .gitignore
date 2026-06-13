@@ -27,6 +27,7 @@ tmp/
 # ─── Personal / dev notes (not for repo) ──────────────────────────────────────
 next-step.txt
 run.txt
+VM_one_timeSetup.md
 
 # ─── Test coverage ────────────────────────────────────────────────────────────
 coverage/
@@ -51,3 +52,6 @@ apps/backend/src/database/prisma/migrations/migration_lock.toml
 
 # ─── Vite ─────────────────────────────────────────────────────────────────────
 *.local
+
+# ─── Private Keys ───────────────────────────────────────────────────────────────────
+*.pem

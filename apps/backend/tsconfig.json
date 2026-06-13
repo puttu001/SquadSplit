@@ -14,7 +14,6 @@
     "noImplicitAny": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "exactOptionalPropertyTypes": true,
     "paths": {
       "@config/*": ["./src/config/*"],
       "@modules/*": ["./src/modules/*"],
