@@ -13,14 +13,14 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.OCI_HOST }}
-          username: ${{ secrets.OCI_USER }}
-          key: ${{ secrets.OCI_SSH_KEY }}
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
           script: |
             set -e
 
             echo "==> Pulling latest code"
-            cd ~/squadsplit
+            cd ~/SquadSplit
             git pull origin main
 
             echo "==> Installing dependencies"
@@ -29,13 +29,13 @@ jobs:
             echo "==> Running DB migrations"
             cd apps/backend
             npx prisma migrate deploy --schema src/database/prisma/schema.prisma
-            cd ~/squadsplit
+            cd ~/SquadSplit
 
             echo "==> Building backend"
-            cd apps/backend && pnpm build && cd ~/squadsplit
+            cd apps/backend && pnpm build && cd ~/SquadSplit
 
             echo "==> Building frontend"
-            cd apps/frontend && pnpm build && cd ~/squadsplit
+            cd apps/frontend && pnpm build && cd ~/SquadSplit
 
             echo "==> Publishing frontend to nginx root"
             sudo rsync -a --delete apps/frontend/dist/ /var/www/squadsplit/
