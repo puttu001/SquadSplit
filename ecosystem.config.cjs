@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'squadsplit-backend',
       script: './apps/backend/dist/server.js',
-      cwd: '/home/azureuser/SquadSplit',
+      cwd: '/home/puttu001/SquadSplit',
       instances: 1,
       autorestart: true,
       watch: false,
