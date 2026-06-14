@@ -1,5 +1,5 @@
 import { api } from '@services/api';
-import type { Expense, PaginatedResponse } from '@/types';
+import type { Expense } from '@/types';
 
 interface ExpenseFilters {
   page?:      number;
