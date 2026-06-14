@@ -28,6 +28,7 @@ tmp/
 next-step.txt
 run.txt
 VM_one_timeSetup.md
+feedbacks.txt
 
 # ─── Test coverage ────────────────────────────────────────────────────────────
 coverage/
