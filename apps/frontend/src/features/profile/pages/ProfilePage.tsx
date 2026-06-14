@@ -64,7 +64,7 @@ export default function ProfilePage() {
     queryFn:  profileApi.getMe,
   });
 
-  const { register, handleSubmit, reset, watch, setValue } = useForm<ProfileForm>();
+  const { handleSubmit, reset, watch, setValue } = useForm<ProfileForm>();
 
   useEffect(() => {
     if (profile) {

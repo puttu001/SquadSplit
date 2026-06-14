@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { friendsApi, type Friend, type SearchUser, type FriendRequest } from '../friends.api';
+import { friendsApi, type Friend, type FriendRequest } from '../friends.api';
 import { Avatar } from '@components/ui';
 import { useAuthStore } from '@store/auth.store';
 

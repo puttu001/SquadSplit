@@ -8,7 +8,7 @@ import { analyticsApi } from '@features/analytics/analytics.api';
 import { friendsApi }   from '@features/friends/friends.api';
 import { Avatar }       from '@components/ui';
 import { formatCurrency } from '@utils/currency';
-import { formatDate, formatDateInput } from '@utils/date';
+import { formatDateInput } from '@utils/date';
 import { joinGroupRoom, leaveGroupRoom } from '@hooks/useSocket';
 import { useAuthStore }  from '@store/auth.store';
 import type { ExpenseCategory } from '@/types';
