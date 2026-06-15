@@ -23,8 +23,6 @@ export function useLogin() {
       if (status === 403 && msg.toLowerCase().includes('verify')) {
         toast.error('Please verify your email first');
         navigate(`/verify-email?email=${encodeURIComponent(vars.email)}`);
-      } else {
-        toast.error('Invalid email or password');
       }
     },
   });
