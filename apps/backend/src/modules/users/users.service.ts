@@ -1,6 +1,7 @@
 import { prisma } from '../../config/database';
 import { AppError } from '../../shared/middleware/error.middleware';
 import { uploadAvatar } from '../../shared/utils/cloudinary';
+import { notificationsService } from '../notifications/notifications.service';
 import type { UpdateProfileInput } from './users.validation';
 
 export class UsersService {
@@ -83,9 +84,21 @@ export class UsersService {
       },
     });
 
-    return prisma.friendRequest.create({
+    const friendRequest = await prisma.friendRequest.create({
       data: { senderId, receiverId: receiver.id },
     });
+
+    prisma.user.findUnique({ where: { id: senderId }, select: { name: true } }).then((sender) => {
+      notificationsService.create({
+        userId: receiver.id,
+        type:   'FRIEND_REQUEST_RECEIVED',
+        title:  'New friend request',
+        body:   `${sender?.name} sent you a friend request`,
+        data:   {},
+      });
+    }).catch(() => {});
+
+    return friendRequest;
   }
 
   async respondFriendRequest(requestId: string, userId: string, action: 'accept' | 'reject') {
@@ -104,6 +117,16 @@ export class UsersService {
           skipDuplicates: true,
         }),
       ]);
+
+      prisma.user.findUnique({ where: { id: userId }, select: { name: true } }).then((responder) => {
+        notificationsService.create({
+          userId: request.senderId,
+          type:   'FRIEND_REQUEST_ACCEPTED',
+          title:  'Friend request accepted',
+          body:   `${responder?.name} accepted your friend request`,
+          data:   {},
+        });
+      }).catch(() => {});
     } else {
       await prisma.friendRequest.update({ where: { id: requestId }, data: { status: 'REJECTED' } });
     }

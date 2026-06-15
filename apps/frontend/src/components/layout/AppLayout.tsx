@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { clsx } from 'clsx';
 import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
+import { notificationsApi } from '@features/notifications/notifications.api';
+import { useNotificationStore } from '@store/notification.store';
 
 // ─── Mobile bottom navigation ─────────────────────────────────────────────────
 function MobileBottomNav() {
@@ -94,6 +96,14 @@ function MobileBottomNav() {
 // ─── Layout ───────────────────────────────────────────────────────────────────
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const setUnreadCount = useNotificationStore((s) => s.setUnreadCount);
+
+  useEffect(() => {
+    notificationsApi.list()
+      .then((data) => setUnreadCount(data.unreadCount))
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
