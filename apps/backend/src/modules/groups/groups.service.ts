@@ -1,6 +1,7 @@
 import { prisma } from '../../config/database';
 import { AppError } from '../../shared/middleware/error.middleware';
 import { uploadGroupImage } from '../../shared/utils/cloudinary';
+import { notificationsService } from '../notifications/notifications.service';
 import type { CreateGroupInput, UpdateGroupInput } from './groups.validation';
 
 export class GroupsService {
@@ -63,14 +64,35 @@ export class GroupsService {
       where: { groupId_userId: { groupId, userId: newUserId } },
     });
     if (existing) throw new AppError(409, 'User is already a member');
-    return prisma.groupMember.create({ data: { groupId, userId: newUserId } });
+    const result = await prisma.groupMember.create({ data: { groupId, userId: newUserId } });
+
+    prisma.group.findUnique({ where: { id: groupId }, select: { name: true } }).then((group) => {
+      notificationsService.create({
+        userId: newUserId,
+        type:   'GROUP_INVITE',
+        title:  'Added to a group',
+        body:   `You were added to "${group?.name}"`,
+        data:   { groupId },
+      });
+    }).catch(() => {});
+
+    return result;
   }
 
   async removeMember(groupId: string, adminId: string, targetUserId: string) {
     await this.assertAdmin(groupId, adminId);
+    const group = await prisma.group.findUnique({ where: { id: groupId }, select: { name: true } });
     await prisma.groupMember.delete({
       where: { groupId_userId: { groupId, userId: targetUserId } },
     });
+
+    notificationsService.create({
+      userId: targetUserId,
+      type:   'MEMBER_REMOVED',
+      title:  'Removed from group',
+      body:   `You were removed from "${group?.name}"`,
+      data:   { groupId },
+    }).catch(() => {});
   }
 
   async leaveGroup(groupId: string, userId: string) {

@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../../config/database';
 import { AppError } from '../../shared/middleware/error.middleware';
 import { emitToGroup } from '../../socket/socket';
+import { notificationsService } from '../notifications/notifications.service';
 import { computeSplits } from '../splits/splits.utils';
 import type { CreateExpenseInput, UpdateExpenseInput, ExpenseFiltersInput } from './expenses.validation';
 
@@ -39,6 +40,26 @@ export class ExpensesService {
     });
 
     emitToGroup(input.groupId, 'expense:created', expense);
+
+    // Notify all group members except the payer (fire and forget)
+    Promise.all([
+      prisma.groupMember.findMany({
+        where:  { groupId: input.groupId, userId: { not: userId } },
+        select: { userId: true },
+      }),
+      prisma.group.findUnique({ where: { id: input.groupId }, select: { name: true } }),
+    ]).then(([members, group]) =>
+      Promise.all(members.map((m) =>
+        notificationsService.create({
+          userId: m.userId,
+          type:   'EXPENSE_ADDED',
+          title:  `New expense in ${group?.name}`,
+          body:   `${expense.paidBy.name} added "${input.description}" ₹${input.amount}`,
+          data:   { groupId: input.groupId },
+        })
+      ))
+    ).catch(() => {});
+
     return expense;
   }
 
@@ -130,6 +151,21 @@ export class ExpensesService {
     });
 
     emitToGroup(expense.groupId, 'expense:updated', updated);
+
+    // Notify other members involved in the splits (fire and forget)
+    const splitUserIds = expense.splits.map((s) => s.userId).filter((id) => id !== userId);
+    prisma.user.findUnique({ where: { id: userId }, select: { name: true } }).then((editor) =>
+      Promise.all(splitUserIds.map((uid) =>
+        notificationsService.create({
+          userId: uid,
+          type:   'EXPENSE_EDITED',
+          title:  'Expense updated',
+          body:   `"${expense.description}" in ${expense.group?.name} was updated by ${editor?.name}`,
+          data:   { groupId: expense.groupId },
+        })
+      ))
+    ).catch(() => {});
+
     return updated;
   }
 
@@ -150,6 +186,18 @@ export class ExpensesService {
     });
 
     emitToGroup(expense.groupId, 'expense:deleted', { expenseId });
+
+    // Notify other members involved in the splits (fire and forget)
+    const splitUserIds = expense.splits.map((s) => s.userId).filter((id) => id !== userId);
+    Promise.all(splitUserIds.map((uid) =>
+      notificationsService.create({
+        userId: uid,
+        type:   'EXPENSE_DELETED',
+        title:  'Expense deleted',
+        body:   `"${expense.description}" was deleted from ${expense.group?.name}`,
+        data:   { groupId: expense.groupId },
+      })
+    )).catch(() => {});
   }
 }
 
