@@ -7,26 +7,23 @@ import { useAuthStore } from '@store/auth.store';
 
 // ─── Add Friend Modal ─────────────────────────────────────────────────────────
 function AddFriendModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [query, setQuery]          = useState('');
-  const [debouncedQ, setDebounced] = useState('');
-  const [sent, setSent]            = useState<Set<string>>(new Set());
-  const inputRef                   = useRef<HTMLInputElement>(null);
-  const queryClient                = useQueryClient();
-  const currentUser                = useAuthStore((s) => s.user);
+  const [query, setQuery]       = useState('');
+  const [submittedQ, setSubmit] = useState('');
+  const [sent, setSent]         = useState<Set<string>>(new Set());
+  const inputRef                = useRef<HTMLInputElement>(null);
+  const queryClient             = useQueryClient();
+  const currentUser             = useAuthStore((s) => s.user);
 
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(query.trim()), 400);
-    return () => clearTimeout(t);
-  }, [query]);
-
-  useEffect(() => {
-    if (open) { setQuery(''); setSent(new Set()); setTimeout(() => inputRef.current?.focus(), 80); }
+    if (open) { setQuery(''); setSubmit(''); setSent(new Set()); setTimeout(() => inputRef.current?.focus(), 80); }
   }, [open]);
 
+  const doSearch = () => { const q = query.trim(); if (q.length >= 3) setSubmit(q); };
+
   const { data: results = [], isFetching } = useQuery({
-    queryKey:  ['user-search', debouncedQ],
-    queryFn:   () => friendsApi.search(debouncedQ),
-    enabled:   debouncedQ.length >= 3,
+    queryKey:  ['user-search', submittedQ],
+    queryFn:   () => friendsApi.search(submittedQ),
+    enabled:   submittedQ.length >= 3,
     staleTime: 30_000,
   });
 
@@ -58,26 +55,37 @@ function AddFriendModal({ open, onClose }: { open: boolean; onClose: () => void 
         </div>
 
         <div className="p-4 border-b border-gray-100 shrink-0">
-          <div className="relative">
-            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)}
-              placeholder="Enter exact username or email"
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 placeholder:text-gray-400"
-            />
-            {isFetching && (
-              <svg className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-              </svg>
-            )}
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <input
+                ref={inputRef} value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && doSearch()}
+                placeholder="Enter exact username or email"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 placeholder:text-gray-400"
+              />
+            </div>
+            <button
+              onClick={doSearch}
+              disabled={query.trim().length < 3 || isFetching}
+              className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-teal-600 hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {isFetching ? (
+                <svg className="w-4 h-4 text-white animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
 
         <div className="overflow-y-auto flex-1">
-          {debouncedQ.length < 3 ? (
+          {submittedQ.length < 3 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center px-6">
               <div className="w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center mb-3">
                 <svg className="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
