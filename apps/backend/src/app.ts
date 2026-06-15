@@ -21,6 +21,9 @@ import analyticsRoutes   from './modules/analytics/analytics.routes';
 
 const app: express.Application = express();
 
+// Trust nginx proxy so req.ip is the real client IP, not 127.0.0.1
+app.set('trust proxy', 1);
+
 // ─── Security & Parsing ───────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({ origin: env.CLIENT_URL, credentials: true }));

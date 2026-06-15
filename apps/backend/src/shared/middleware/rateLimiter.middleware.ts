@@ -10,7 +10,9 @@ export const globalRateLimiter = rateLimit({
 });
 
 export const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
-  message: { success: false, message: 'Too many auth attempts, please try again later' },
+  windowMs:        15 * 60 * 1000, // 15-minute window
+  max:             10,              // 10 attempts per IP per window
+  standardHeaders: true,            // sends Retry-After header so clients know when to retry
+  legacyHeaders:   false,
+  message: { success: false, message: 'Too many attempts. Please wait 15 minutes and try again.' },
 });
