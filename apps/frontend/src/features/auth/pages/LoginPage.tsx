@@ -315,6 +315,20 @@ export default function LoginPage() {
                   </Link>
                 </div>
 
+                {/* API error */}
+                {login.isError && (
+                  <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                    <svg className="w-4 h-4 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-sm text-red-600">
+                      {(login.error as { response?: { data?: { message?: string } } })
+                        ?.response?.data?.message ?? 'Invalid email or password'}
+                    </p>
+                  </div>
+                )}
+
                 {/* Submit */}
                 <button
                   type="submit"

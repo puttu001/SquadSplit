@@ -38,9 +38,8 @@ export class UsersService {
           { id: { not: excludeId } },
           {
             OR: [
-              { username: { contains: query, mode: 'insensitive' } },
-              { email:    { contains: query, mode: 'insensitive' } },
-              { name:     { contains: query, mode: 'insensitive' } },
+              { username: { equals: query, mode: 'insensitive' } },
+              { email:    { equals: query, mode: 'insensitive' } },
             ],
           },
         ],
