@@ -2,22 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { authApi } from '../auth.api';
 import toast from 'react-hot-toast';
-
-function Logo() {
-  return (
-    <div className="flex items-center gap-2.5">
-      <div className="w-10 h-10 rounded-xl bg-teal-600 shadow-sm flex items-center justify-center">
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      </div>
-      <span className="text-xl font-bold text-gray-900">
-        Squad<span className="text-teal-600">Split</span>
-      </span>
-    </div>
-  );
-}
+import { Logo } from '@components/ui/Logo';
 
 export default function VerifyEmailPage() {
   const [params]  = useSearchParams();

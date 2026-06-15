@@ -4,30 +4,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useLogin } from '@hooks/useAuth';
+import { Logo } from '@components/ui/Logo';
 
 const schema = z.object({
-  email:    z.string().email('Enter a valid email'),
+  email:    z.string().min(1, 'Email is required').email('Enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
 });
 type FormData = z.infer<typeof schema>;
-
-// ─── Logo ─────────────────────────────────────────────────────────────────────
-function Logo({ variant = 'light' }: { variant?: 'light' | 'dark' }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center
-        ${variant === 'light' ? 'bg-white/20' : 'bg-teal-600 shadow-sm'}`}>
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      </div>
-      <span className={`text-xl font-bold ${variant === 'light' ? 'text-white' : 'text-gray-900'}`}>
-        Squad<span className={variant === 'light' ? 'text-teal-200' : 'text-teal-600'}>Split</span>
-      </span>
-    </div>
-  );
-}
 
 // ─── Illustration SVG ─────────────────────────────────────────────────────────
 function SquadIllustration() {
@@ -150,10 +133,21 @@ const FEATURES = [
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const login = useLogin();
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver:       zodResolver(schema),
+    mode:           'onTouched',
+    reValidateMode: 'onChange',
+  });
+
+  const onSubmit = handleSubmit((data) => {
+    login.mutate(data, {
+      onError: (err: { response?: { data?: { message?: string } } }) => {
+        setServerError(err.response?.data?.message ?? 'Invalid email or password');
+      },
+    });
   });
 
   return (
@@ -223,7 +217,8 @@ export default function LoginPage() {
               </div>
 
               <form
-                onSubmit={handleSubmit((data) => login.mutate(data))}
+                onSubmit={onSubmit}
+                onChange={() => setServerError(null)}
                 className="flex flex-col gap-4"
                 noValidate
               >
@@ -316,16 +311,13 @@ export default function LoginPage() {
                 </div>
 
                 {/* API error */}
-                {login.isError && (
+                {serverError && (
                   <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                     <svg className="w-4 h-4 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                         d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p className="text-sm text-red-600">
-                      {(login.error as { response?: { data?: { message?: string } } })
-                        ?.response?.data?.message ?? 'Invalid email or password'}
-                    </p>
+                    <p className="text-sm text-red-600">{serverError}</p>
                   </div>
                 )}
 
