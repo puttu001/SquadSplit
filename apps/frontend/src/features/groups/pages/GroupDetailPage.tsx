@@ -113,6 +113,7 @@ function AddExpenseModal({
   function validate() {
     const e: Record<string, string> = {};
     if (!description.trim())                      e.description = 'Description is required';
+    else if (description.trim().length > 200)     e.description = 'Description too long (max 200 chars)';
     const amt = parseFloat(amount);
     if (!amount || isNaN(amt) || amt <= 0)        e.amount      = 'Enter a valid amount';
     if (!splitAll && splitIds.size === 0)         e.splits      = 'Select at least one person';
@@ -885,7 +886,7 @@ function SimplifiedViewModal({
 }
 
 // ─── Compact stat card ────────────────────────────────────────────────────────
-function StatCard({ label, value, variant }: { label: string; value: string; variant: 'neutral' | 'owe' | 'owed' }) {
+function StatCard({ label, value, variant, className = '' }: { label: string; value: string; variant: 'neutral' | 'owe' | 'owed'; className?: string }) {
   const cfg = {
     neutral: { icon: 'bg-violet-50', color: 'text-violet-500', val: 'text-gray-900',   path: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
     owe:     { icon: 'bg-red-50',    color: 'text-red-500',    val: 'text-red-500',    path: 'M7 17L17 7M17 7H7M17 7v10' },
@@ -893,7 +894,7 @@ function StatCard({ label, value, variant }: { label: string; value: string; var
   }[variant];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex items-center gap-2.5">
+    <div className={`bg-white rounded-xl border border-gray-100 shadow-sm p-3 flex items-center gap-2.5 ${className}`}>
       <div className={`w-8 h-8 ${cfg.icon} rounded-full flex items-center justify-center shrink-0`}>
         <svg className={`w-4 h-4 ${cfg.color}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={cfg.path} />
@@ -1025,8 +1026,6 @@ export default function GroupDetailPage() {
   const groupTotalSpend = expenses.reduce((s, e) => s + Number(e.amount), 0);
   const yourTotalSpend  = expenses.filter((e) => e.paidById === currentUserId).reduce((s, e) => s + Number(e.amount), 0);
   const userBalance     = balancesData?.balances?.find((b) => b.userId === currentUserId)?.amount ?? 0;
-  const youOwe          = userBalance < 0 ? Math.abs(userBalance) : 0;
-  const youAreOwed      = userBalance > 0 ? userBalance : 0;
 
   return (
     <>
@@ -1138,11 +1137,15 @@ export default function GroupDetailPage() {
         </div>
 
         {/* ── Stat cards ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <StatCard label="Group Total"  value={formatCurrency(groupTotalSpend)} variant="neutral" />
-          <StatCard label="Your Spend"   value={formatCurrency(yourTotalSpend)}  variant="neutral" />
-          <StatCard label="You Owe"      value={formatCurrency(youOwe)}          variant="owe"     />
-          <StatCard label="You're Owed"  value={formatCurrency(youAreOwed)}      variant="owed"    />
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <StatCard label="Group Total" value={formatCurrency(groupTotalSpend)} variant="neutral" />
+          <StatCard label="Your Spend"  value={formatCurrency(yourTotalSpend)}  variant="neutral" />
+          <StatCard
+            label={userBalance > 0 ? "You're Owed" : userBalance < 0 ? 'You Owe' : 'All Settled'}
+            value={formatCurrency(Math.abs(userBalance))}
+            variant={userBalance > 0 ? 'owed' : userBalance < 0 ? 'owe' : 'neutral'}
+            className="col-span-2 sm:col-span-1"
+          />
         </div>
 
         {/* ── Expenses ── */}

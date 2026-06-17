@@ -20,7 +20,7 @@ export class AnalyticsService {
     }));
 
     const balances     = computeGroupBalances(rawExpenses);
-    const transactions = simplifyDebts([...balances]);
+    const transactions = simplifyDebts(balances.map((b) => ({ ...b })));
 
     return { balances, simplifiedTransactions: transactions };
   }
@@ -29,13 +29,15 @@ export class AnalyticsService {
     const [groups, totalOwed, totalReceivable, recentExpenses] = await Promise.all([
       prisma.groupMember.count({ where: { userId } }),
 
+      // Splits YOU owe = your splits on expenses where YOU did NOT pay
       prisma.expenseSplit.aggregate({
-        where:  { userId, expense: { isDeleted: false }, isPaid: false },
+        where:  { userId, isPaid: false, expense: { isDeleted: false, paidById: { not: userId } } },
         _sum:   { amount: true },
       }),
 
+      // Splits owed TO YOU = other people's splits on expenses YOU paid
       prisma.expenseSplit.aggregate({
-        where:  { expense: { paidById: userId, isDeleted: false }, isPaid: false },
+        where:  { userId: { not: userId }, isPaid: false, expense: { paidById: userId, isDeleted: false } },
         _sum:   { amount: true },
       }),
 

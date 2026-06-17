@@ -13,12 +13,21 @@ export class ExpensesService {
     });
     if (!member) throw new AppError(403, 'Not a member of this group');
 
+    // If paidByUserId is provided and different from the logged-in user, verify they are also a member
+    const paidById = input.paidByUserId ?? userId;
+    if (paidById !== userId) {
+      const payerMember = await prisma.groupMember.findUnique({
+        where: { groupId_userId: { groupId: input.groupId, userId: paidById } },
+      });
+      if (!payerMember) throw new AppError(400, 'Selected payer is not a member of this group');
+    }
+
     const computedSplits = computeSplits(input.amount, input.splitType, input.splits);
 
     const expense = await prisma.expense.create({
       data: {
         groupId:     input.groupId,
-        paidById:    userId,
+        paidById,
         amount:      input.amount,
         description: input.description,
         notes:       input.notes,
