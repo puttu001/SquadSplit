@@ -29,6 +29,7 @@ export function useSocketConnection() {
     socket.on('expense:created', () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['balances'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     });
 
     socket.on('expense:updated', () => {
@@ -38,6 +39,7 @@ export function useSocketConnection() {
     socket.on('expense:deleted', () => {
       queryClient.invalidateQueries({ queryKey: ['expenses'] });
       queryClient.invalidateQueries({ queryKey: ['balances'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     });
 
     return () => {

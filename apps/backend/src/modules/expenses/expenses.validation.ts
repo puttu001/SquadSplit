@@ -9,16 +9,17 @@ const splitEntrySchema = z.object({
 });
 
 export const createExpenseSchema = z.object({
-  groupId:     z.string().cuid(),
-  amount:      z.number().positive(),
-  description: z.string().min(5).max(200),
-  notes:       z.string().max(500).optional(),
-  category:    z.enum(EXPENSE_CATEGORIES).default('MISCELLANEOUS'),
-  customTag:   z.string().max(30).optional(),
-  date:        z.coerce.date(),
-  isRecurring: z.boolean().default(false),
-  splitType:   z.enum(SPLIT_TYPES),
-  splits:      z.array(splitEntrySchema).min(1),
+  groupId:      z.string().cuid(),
+  paidByUserId: z.string().cuid().optional(), // omit → defaults to the authenticated user
+  amount:       z.number().positive(),
+  description:  z.string().min(1).max(200),
+  notes:        z.string().max(500).optional(),
+  category:     z.enum(EXPENSE_CATEGORIES).default('MISCELLANEOUS'),
+  customTag:    z.string().max(30).optional(),
+  date:         z.coerce.date(),
+  isRecurring:  z.boolean().default(false),
+  splitType:    z.enum(SPLIT_TYPES),
+  splits:       z.array(splitEntrySchema).min(1),
 });
 
 export const updateExpenseSchema = createExpenseSchema.partial().omit({ groupId: true });
