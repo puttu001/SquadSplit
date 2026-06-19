@@ -100,6 +100,8 @@ export class AuthService {
     const user = await prisma.user.findUnique({ where: { email: input.email } });
     if (!user) throw new AppError(401, 'Invalid credentials');
 
+    if (!user.passwordHash) throw new AppError(401, 'This account uses Google login');
+
     const valid = await bcrypt.compare(input.password, user.passwordHash);
     if (!valid) throw new AppError(401, 'Invalid credentials');
 
@@ -176,6 +178,45 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(newPassword, env.BCRYPT_SALT_ROUNDS);
     await prisma.user.update({ where: { id: record.userId }, data: { passwordHash } });
     await prisma.passwordResetToken.update({ where: { token }, data: { used: true } });
+  }
+
+  async googleLogin(profile: { googleId: string; email: string; name: string; avatarUrl?: string }) {
+    let user = await prisma.user.findUnique({ where: { googleId: profile.googleId } });
+
+    if (!user) {
+      user = await prisma.user.findUnique({ where: { email: profile.email } });
+      if (user) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data:  { googleId: profile.googleId, isEmailVerified: true },
+        });
+      } else {
+        const base     = profile.email.split('@')[0].replace(/[^a-z0-9_]/g, '').slice(0, 20);
+        const username = base + '_' + Math.random().toString(36).slice(2, 6);
+        user = await prisma.user.create({
+          data: {
+            email:           profile.email,
+            name:            profile.name,
+            username,
+            googleId:        profile.googleId,
+            avatarUrl:       profile.avatarUrl,
+            isEmailVerified: true,
+          },
+        });
+      }
+    }
+
+    if (!user.isActive) throw new AppError(403, 'Account suspended');
+
+    const accessToken  = signAccessToken({ userId: user.id, email: user.email });
+    const refreshToken = signRefreshToken({ userId: user.id, email: user.email });
+
+    await prisma.refreshToken.create({
+      data: { userId: user.id, token: refreshToken, expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
+    });
+
+    const { passwordHash: _, ...safeUser } = user;
+    return { user: safeUser, accessToken, refreshToken };
   }
 }
 

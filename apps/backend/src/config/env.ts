@@ -25,6 +25,9 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().min(1),
   CLOUDINARY_API_SECRET: z.string().min(1),
 
+  GOOGLE_CLIENT_ID:     z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+
   BCRYPT_SALT_ROUNDS: z.coerce.number().default(12),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
