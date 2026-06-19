@@ -38,4 +38,8 @@ router.post('/verify-email', authRateLimiter, validate(verifyEmailSchema), authC
 // POST /api/v1/auth/resend-verification
 router.post('/resend-verification', authRateLimiter, validate(resendVerificationSchema), authController.resendVerification);
 
+// Google OAuth
+router.get('/google',          authController.googleRedirect);
+router.get('/google/callback', authController.googleCallback);
+
 export default router;
