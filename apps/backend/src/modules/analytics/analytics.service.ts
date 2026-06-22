@@ -9,6 +9,9 @@ export class AnalyticsService {
     });
     if (!member) throw new AppError(403, 'Not a member of this group');
 
+    const group = await prisma.group.findUnique({ where: { id: groupId }, select: { isSettled: true } });
+    if (group?.isSettled) return { balances: [], simplifiedTransactions: [] };
+
     const expenses = await prisma.expense.findMany({
       where:   { groupId, isDeleted: false },
       select:  { paidById: true, splits: { select: { userId: true, amount: true } } },
@@ -29,15 +32,15 @@ export class AnalyticsService {
     const [groups, totalOwed, totalReceivable, recentExpenses] = await Promise.all([
       prisma.groupMember.count({ where: { userId } }),
 
-      // Splits YOU owe = your splits on expenses where YOU did NOT pay
+      // Splits YOU owe = your splits on expenses where YOU did NOT pay (exclude settled groups)
       prisma.expenseSplit.aggregate({
-        where:  { userId, isPaid: false, expense: { isDeleted: false, paidById: { not: userId } } },
+        where:  { userId, isPaid: false, expense: { isDeleted: false, paidById: { not: userId }, group: { isSettled: false } } },
         _sum:   { amount: true },
       }),
 
-      // Splits owed TO YOU = other people's splits on expenses YOU paid
+      // Splits owed TO YOU = other people's splits on expenses YOU paid (exclude settled groups)
       prisma.expenseSplit.aggregate({
-        where:  { userId: { not: userId }, isPaid: false, expense: { paidById: userId, isDeleted: false } },
+        where:  { userId: { not: userId }, isPaid: false, expense: { paidById: userId, isDeleted: false, group: { isSettled: false } } },
         _sum:   { amount: true },
       }),
 

@@ -20,6 +20,7 @@ pnpm-debug.log*
 
 # ─── Runtime / temp ───────────────────────────────────────────────────────────
 *.local
+.claude/
 .cache/
 .tmp/
 tmp/

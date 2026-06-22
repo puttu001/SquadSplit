@@ -992,6 +992,9 @@ export default function GroupDetailPage() {
     mutationFn: () => groupsApi.toggleSettle(groupId),
     onSuccess:  (data) => {
       queryClient.invalidateQueries({ queryKey: ['group', groupId] });
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+      queryClient.invalidateQueries({ queryKey: ['balances', groupId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       toast.success(data.isSettled ? 'Group marked as settled' : 'Group marked as active');
     },
     onError: () => toast.error('Failed to update group status'),

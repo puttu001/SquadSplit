@@ -106,8 +106,12 @@ function GroupCard({ group, index }: { group: Group; index: number }) {
         </h3>
         <p className="text-xs text-gray-400 mt-0.5">{memberCount} member{memberCount !== 1 ? 's' : ''}</p>
         <div className="mt-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">
-            Unsettled
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+            group.isSettled
+              ? 'bg-green-50 text-green-700 border-green-200'
+              : 'bg-red-50 text-red-600 border-red-100'
+          }`}>
+            {group.isSettled ? 'Settled' : 'Unsettled'}
           </span>
         </div>
         <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
@@ -144,8 +148,12 @@ function GroupRow({ group, index }: { group: Group; index: number }) {
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm text-gray-900 truncate">{group.name}</p>
         <p className="text-xs text-gray-400 mt-0.5">{memberCount} member{memberCount !== 1 ? 's' : ''}</p>
-        <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">
-          Unsettled
+        <span className={`inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+          group.isSettled
+            ? 'bg-green-50 text-green-700 border-green-200'
+            : 'bg-red-50 text-red-600 border-red-100'
+        }`}>
+          {group.isSettled ? 'Settled' : 'Unsettled'}
         </span>
       </div>
 
@@ -221,7 +229,7 @@ export default function DashboardPage() {
     onError: () => toast.error('Failed to create group'),
   });
 
-  const filteredGroups = filter === 'unsettled' ? groups : [];
+  const filteredGroups = groups.filter((g) => filter === 'settled' ? g.isSettled : !g.isSettled);
 
   return (
     <>
