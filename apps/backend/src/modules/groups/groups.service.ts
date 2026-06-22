@@ -1,6 +1,7 @@
 import { prisma } from '../../config/database';
 import { AppError } from '../../shared/middleware/error.middleware';
 import { uploadGroupImage } from '../../shared/utils/cloudinary';
+import { emitToGroup } from '../../socket/socket';
 import { notificationsService } from '../notifications/notifications.service';
 import type { CreateGroupInput, UpdateGroupInput } from './groups.validation';
 
@@ -53,9 +54,26 @@ export class GroupsService {
 
   async toggleSettle(groupId: string, userId: string) {
     await this.assertAdmin(groupId, userId);
-    const group = await prisma.group.findUnique({ where: { id: groupId }, select: { isSettled: true } });
+    const group = await prisma.group.findUnique({ where: { id: groupId }, select: { isSettled: true, name: true } });
     if (!group) throw new AppError(404, 'Group not found');
-    return prisma.group.update({ where: { id: groupId }, data: { isSettled: !group.isSettled } });
+
+    const updated = await prisma.group.update({ where: { id: groupId }, data: { isSettled: !group.isSettled } });
+
+    emitToGroup(groupId, 'group:settled', { groupId, isSettled: updated.isSettled });
+
+    const status = updated.isSettled ? 'settled' : 'marked active';
+    prisma.groupMember.findMany({ where: { groupId, userId: { not: userId } }, select: { userId: true } })
+      .then((members) => Promise.all(members.map((m) =>
+        notificationsService.create({
+          userId: m.userId,
+          type:   'GROUP_INVITE',
+          title:  `Group ${updated.isSettled ? 'settled' : 'active'}`,
+          body:   `"${group.name}" has been ${status}`,
+          data:   { groupId },
+        })
+      ))).catch(() => {});
+
+    return updated;
   }
 
   async addMember(groupId: string, adminId: string, newUserId: string) {

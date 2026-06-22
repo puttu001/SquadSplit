@@ -42,6 +42,13 @@ export function useSocketConnection() {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     });
 
+    socket.on('group:settled', () => {
+      queryClient.invalidateQueries({ queryKey: ['groups'] });
+      queryClient.invalidateQueries({ queryKey: ['group'] });
+      queryClient.invalidateQueries({ queryKey: ['balances'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    });
+
     return () => {
       socket?.disconnect();
       socket = null;
