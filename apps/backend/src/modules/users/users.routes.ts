@@ -26,6 +26,9 @@ router.post('/me/avatar',      upload.single('avatar'), usersController.uploadAv
 // Search
 router.get('/search', usersController.searchUsers);
 
+// Push notifications
+router.post('/me/fcm-token', usersController.registerFcmToken);
+
 // Friends
 router.get('/friends',                            usersController.getFriends);
 router.get('/friends/requests',                   usersController.getPendingRequests);

@@ -31,6 +31,7 @@ model User {
   refreshTokens               RefreshToken[]
   passwordResetTokens         PasswordResetToken[]
   emailVerificationTokens     EmailVerificationToken[]
+  fcmTokens                   FcmToken[]
 
   // Social
   sentFriendRequests     FriendRequest[] @relation("FriendRequestSender")
@@ -87,6 +88,17 @@ model EmailVerificationToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("email_verification_tokens")
+}
+
+model FcmToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("fcm_tokens")
 }
 
 // ─── Friends ──────────────────────────────────────────────────────────────────

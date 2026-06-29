@@ -5,6 +5,7 @@ import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 import { notificationsApi } from '@features/notifications/notifications.api';
 import { useNotificationStore } from '@store/notification.store';
+import { usePushNotifications } from '@hooks/usePushNotifications';
 
 // ─── Mobile bottom navigation ─────────────────────────────────────────────────
 function MobileBottomNav() {
@@ -97,6 +98,7 @@ function MobileBottomNav() {
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const setUnreadCount = useNotificationStore((s) => s.setUnreadCount);
+  usePushNotifications();
 
   useEffect(() => {
     notificationsApi.list()
