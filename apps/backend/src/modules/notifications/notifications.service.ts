@@ -1,5 +1,6 @@
 import { NotificationType } from '@prisma/client';
 import { prisma } from '../../config/database';
+import { messaging } from '../../config/firebase';
 import { emitToUser } from '../../socket/socket';
 
 export class NotificationsService {
@@ -12,7 +13,34 @@ export class NotificationsService {
   }) {
     const notification = await prisma.notification.create({ data: params });
     emitToUser(params.userId, 'notification:new', notification);
+    this.sendPush(params.userId, params.title, params.body, params.data).catch(() => {});
     return notification;
+  }
+
+  private async sendPush(userId: string, title: string, body: string, data?: object) {
+    if (!messaging) return;
+    const tokens = await prisma.fcmToken.findMany({ where: { userId }, select: { token: true } });
+    if (!tokens.length) return;
+
+    const payload = {
+      notification: { title, body },
+      data: data ? Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])) : undefined,
+    };
+
+    const response = await messaging.sendEachForMulticast({
+      tokens: tokens.map((t) => t.token),
+      ...payload,
+    });
+
+    const staleTokens = response.responses
+      .map((r: { success: boolean; error?: { code: string } }, i: number) =>
+        !r.success && r.error?.code === 'messaging/registration-token-not-registered' ? tokens[i].token : null
+      )
+      .filter(Boolean) as string[];
+
+    if (staleTokens.length) {
+      await prisma.fcmToken.deleteMany({ where: { token: { in: staleTokens } } });
+    }
   }
 
   async getUserNotifications(userId: string, page = 1, limit = 20) {

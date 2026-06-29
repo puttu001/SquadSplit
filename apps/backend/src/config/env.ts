@@ -28,6 +28,10 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID:     z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 
+  FIREBASE_PROJECT_ID:    z.string().optional(),
+  FIREBASE_CLIENT_EMAIL:  z.string().optional(),
+  FIREBASE_PRIVATE_KEY:   z.string().optional(),
+
   BCRYPT_SALT_ROUNDS: z.coerce.number().default(12),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000),
   RATE_LIMIT_MAX: z.coerce.number().default(100),

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { usersService } from './users.service';
 import { sendSuccess } from '../../shared/utils/response';
+import { prisma } from '../../config/database';
 
 export class UsersController {
   async uploadAvatar(req: Request, res: Response, next: NextFunction) {
@@ -64,6 +65,22 @@ export class UsersController {
     try {
       await usersService.removeFriend(req.user!.id, req.params.friendId);
       sendSuccess(res, null, 'Friend removed');
+    } catch (err) { next(err); }
+  }
+
+  async registerFcmToken(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { token } = req.body;
+      if (!token || typeof token !== 'string') {
+        res.status(400).json({ success: false, message: 'Token is required' });
+        return;
+      }
+      await prisma.fcmToken.upsert({
+        where:  { token },
+        update: { userId: req.user!.id },
+        create: { userId: req.user!.id, token },
+      });
+      sendSuccess(res, null, 'FCM token registered');
     } catch (err) { next(err); }
   }
 }

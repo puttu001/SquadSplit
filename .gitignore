@@ -58,3 +58,4 @@ apps/backend/src/database/prisma/migrations/migration_lock.toml
 
 # ─── Private Keys ───────────────────────────────────────────────────────────────────
 *.pem
+firebase.txt
