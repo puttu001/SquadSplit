@@ -362,7 +362,7 @@ export default function LoginPage() {
 
               {/* Google login */}
               <a
-                href="/api/v1/auth/google"
+                href={`${import.meta.env.VITE_API_URL ?? '/api/v1'}/auth/google`}
                 className="w-full flex items-center justify-center gap-2.5 border border-gray-300
                   bg-white hover:bg-gray-50 text-sm font-semibold text-gray-700 py-3 rounded-xl
                   transition-colors shadow-sm"
