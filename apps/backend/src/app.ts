@@ -44,6 +44,10 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', env: env.NODE_ENV });
 });
 
+app.head('/health', (_req, res) => {
+  res.sendStatus(200);
+});
+
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use('/api/v1/auth',          authRoutes);
 app.use('/api/v1/users',         usersRoutes);
